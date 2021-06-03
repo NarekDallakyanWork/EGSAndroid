@@ -28,6 +28,7 @@ class NavigatorImpl @Inject constructor(private val activity: FragmentActivity) 
         val previousScreen = getPreviousScreen()
 
         if (previousScreen == null) {
+            ScreensStack.removeAllScreens()
             activity.finish()
             return
         }
@@ -93,9 +94,9 @@ class NavigatorImpl @Inject constructor(private val activity: FragmentActivity) 
         }
 
         // if current fragment is already is showed and not need recreate
-        if (currentScreen == null || screen == currentScreen && !recreate) return
+        if (screen == currentScreen && !recreate) return
 
-        val currentFragmentTag = currentScreen.fragmentClass.name
+        val currentFragmentTag = currentScreen?.fragmentClass?.name
         val newFragmentTag = screen.fragmentClass.name
 
         if (!recreate) {
@@ -151,14 +152,14 @@ class NavigatorImpl @Inject constructor(private val activity: FragmentActivity) 
         return currentScreen
     }
 
-    private fun replaceFragments(replaceTag: String, replaceWith: String, bundle: Bundle?) {
+    private fun replaceFragments(replaceTag: String?, replaceWith: String, bundle: Bundle?) {
 
         hideFragment(replaceTag, bundle) {
             showFragment(replaceWith, bundle)
         }
     }
 
-    private fun replaceFragments(replaceTag: String, fragment: Fragment, bundle: Bundle?) {
+    private fun replaceFragments(replaceTag: String?, fragment: Fragment, bundle: Bundle?) {
 
         hideFragment(replaceTag, bundle) {
             beginFragmentTransaction(containerId, fragment, bundle)
@@ -235,7 +236,9 @@ class NavigatorImpl @Inject constructor(private val activity: FragmentActivity) 
     /**
      * Begin remove fragment transaction
      */
-    private fun removeFragment(fragmentTag: String) {
+    private fun removeFragment(fragmentTag: String?) {
+
+        if(fragmentTag == null) return
 
         val fragment = activity.supportFragmentManager.findFragmentByTag(fragmentTag)
 
@@ -258,6 +261,11 @@ class NavigatorImpl @Inject constructor(private val activity: FragmentActivity) 
         receiveHideNotification: Boolean = true,
         runOnCommit: (() -> Unit)? = null,
     ) {
+
+        if(tag == null){
+            runOnCommit?.invoke()
+            return
+        }
 
         val fragment = activity.supportFragmentManager.findFragmentByTag(tag) ?: return
 
